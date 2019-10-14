@@ -1,0 +1,15 @@
+version: "3.1"
+
+services:
+  gowebserver:
+    build: .
+    container_name: gowebserver
+    env_file:
+     - ./.env
+    ports:
+      - "$WEBSERVER_PORT:$WEBSERVER_PORT"
+
+networks:
+  default:
+    external:
+      name: ansrnetwork
