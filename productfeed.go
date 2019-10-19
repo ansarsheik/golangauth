@@ -3,53 +3,54 @@ package main
 import (
 	"fmt"
 	"net/http"
-	"strconv"
-	"github.com/gorilla/mux"
 	"regexp"
+	"strconv"
 	"strings"
+
+	"github.com/gorilla/mux"
 )
 
 type Product struct {
-	Id 			int `json:"pid"`
-	Title 		string `json:"Product_Title"`
-	Category 	string `json:"Product_Category"`
-	Type 		string `json:"Product_Type"`
-	Websale 	float32 `json:"Websale"`
-	Subtotal	float32 `json:"subtotal"`
-	Quantity	int `json:"qty"`
-	PrimaryPsid int `json:"p_psid"`
-	Psid 		int `json:"psid"`
-	Wcrypt 		string `json:"Weightcrypt"`
-	Weight 		string `json:"Weight"`
-	Metal 		string `json:"Metal"`
-	Rpid		int		`json:"rpid"`
+	Id          int     `json:"pid"`
+	Title       string  `json:"Product_Title"`
+	Category    string  `json:"Product_Category"`
+	Type        string  `json:"Product_Type"`
+	Websale     float32 `json:"Websale"`
+	Subtotal    float32 `json:"subtotal"`
+	Quantity    int     `json:"qty"`
+	PrimaryPsid int     `json:"p_psid"`
+	Psid        int     `json:"psid"`
+	Wcrypt      string  `json:"Weightcrypt"`
+	Weight      string  `json:"Weight"`
+	Metal       string  `json:"Metal"`
+	Rpid        int     `json:"rpid"`
 } //TODO use Capital letter for first word in structs
 
 type ProductFilters struct {
 	Category, Type, Random, Search, SortBy string
-	Limit, ProductId string
+	Limit, ProductId                       string
 }
 
 type WeightDataFilter struct {
 	WeightInGrams []WeightFilter `json:"weight_in_grams"`
-	WeightInOz []WeightFilter `json:"weight_in_oz"`
+	WeightInOz    []WeightFilter `json:"weight_in_oz"`
 }
 
 type WeightFilter struct {
-	Weight float32 `json:"weight"`
-	Ustring string `json:"ustring"`
-	WeightHuman string `json:"weight_human"`
+	Weight      float32 `json:"weight"`
+	Ustring     string  `json:"ustring"`
+	WeightHuman string  `json:"weight_human"`
 }
 
 type ProductFeedData struct {
-	Products []Product `json:"products"`
-	Filters WeightDataFilter `json:"filters"`
+	Products []Product        `json:"products"`
+	Filters  WeightDataFilter `json:"filters"`
 }
 
 type ProductPage struct {
-	Products Product `json:"product"`
-	Quantity []Quantity `json:"quantity"`
-	SimilarProducts	[]Product `json:"similarproducts"`
+	Products        Product    `json:"product"`
+	Quantity        []Quantity `json:"quantity"`
+	SimilarProducts []Product  `json:"similarproducts"`
 }
 
 type MinMax struct {
@@ -62,26 +63,25 @@ type ErrorMessage struct {
 }
 
 type Quantity struct {
-	QtyFrom int `json:"qtyFrom"`
-	QtyTo	int `json:"qtyTo"`
-	Price	string `json:"price"`
-	Psid	int `json:"psid"`
+	QtyFrom int    `json:"qtyFrom"`
+	QtyTo   int    `json:"qtyTo"`
+	Price   string `json:"price"`
+	Psid    int    `json:"psid"`
 }
-
 
 func filterProductsForMenu(Type string, Category string) []Product {
 
 	db := DBconnection()
 
 	query := "SELECT " +
-	"p.Product_Title,"+
-	"ps.psid as Psid" +
-	" FROM products p "+
-	" INNER JOIN products_stock ps ON ps.primary_rpid = p.rpid "+
-	" WHERE p.Product_Type = '"+ Type + "'" +
-	" AND p.Product_Category = '"+ Category + "' "+
-	" AND ps.StockInSale = 'Y' " +
-	" ORDER BY RAND() LIMIT 4 "
+		"p.Product_Title," +
+		"ps.psid as Psid" +
+		" FROM products p " +
+		" INNER JOIN products_stock ps ON ps.primary_rpid = p.rpid " +
+		" WHERE p.Product_Type = '" + Type + "'" +
+		" AND p.Product_Category = '" + Category + "' " +
+		" AND ps.StockInSale = 'Y' " +
+		" ORDER BY RAND() LIMIT 4 "
 
 	results, err := db.Query(query)
 	defer results.Close()
@@ -94,8 +94,8 @@ func filterProductsForMenu(Type string, Category string) []Product {
 			&m.Title,
 			&m.Psid)
 
-			checkErr(err)
-			menu = append(menu, m)
+		checkErr(err)
+		menu = append(menu, m)
 	}
 
 	return menu
@@ -112,7 +112,7 @@ func prepareCondition(filter ProductFilters) string {
 	}
 
 	if len(filter.ProductId) > 0 {
-		cond += " AND ps.psid != "+ filter.ProductId
+		cond += " AND ps.psid != " + filter.ProductId
 	}
 
 	//fmt.Println("one",filter.Search)
@@ -123,17 +123,17 @@ func prepareCondition(filter ProductFilters) string {
 		search := strings.Split(filter.Search, "+")
 
 		//fmt.Println(len(search))
-		
+
 		if len(search) > 1 {
-			cond += " AND (p.Product_Type like '%"+ search[0] + "%' AND p.Product_Category like '%"+ search[1] + "%' )"
-			cond += " or (p.Product_Category like '%"+ search[0] + "%' AND p.Product_Type like '%"+ search[1] + "%' )"
-		
-			searchtext := strings.Replace(filter.Search, "+"," ", 2)
+			cond += " AND (p.Product_Type like '%" + search[0] + "%' AND p.Product_Category like '%" + search[1] + "%' )"
+			cond += " or (p.Product_Category like '%" + search[0] + "%' AND p.Product_Type like '%" + search[1] + "%' )"
+
+			searchtext := strings.Replace(filter.Search, "+", " ", 2)
 			//fmt.Println("two",searchtext)
-			cond += " or p.Product_Title like '%"+ searchtext + "%'"
+			cond += " or p.Product_Title like '%" + searchtext + "%'"
 		} else {
-			cond += " AND p.Product_Title like '%"+ filter.Search + "%' or (p.Product_Type like '%"+ filter.Search +
-			 "%' or p.Product_Category like '%"+ filter.Search + "%' )"
+			cond += " AND p.Product_Title like '%" + filter.Search + "%' or (p.Product_Type like '%" + filter.Search +
+				"%' or p.Product_Category like '%" + filter.Search + "%' )"
 		}
 	}
 
@@ -176,7 +176,7 @@ func getWeightFilter(wt string, filter ProductFilters) []WeightFilter {
 	return weightinGms
 }
 
-func getProductsFeed(filter ProductFilters) []Product  {
+func getProductsFeed(filter ProductFilters) []Product {
 
 	query := "SELECT " +
 		"p.pid," +
@@ -185,32 +185,31 @@ func getProductsFeed(filter ProductFilters) []Product  {
 		"p.Product_Type, " +
 		"ps.SellPrice AS Websale, " +
 		"ps.psid," +
-		"ENCRYPT(ps.Weight) AS Wcrypt, "+
+		"ENCRYPT(ps.Weight) AS Wcrypt, " +
 		"ps.Weight AS Weight, " +
 		"ps.Metal " +
 		"FROM products p " +
 		"INNER JOIN products_stock ps ON ps.child_rpid = p.rpid " +
 		"WHERE 1 AND ps.StockInSale = 'Y' " + prepareCondition(filter) +
-		" GROUP BY p.pid "
+		" GROUP BY p.pid, ps.SellPrice, ps.psid"
 
 	if len(filter.Random) > 0 {
 		query += " order by RAND() "
 	}
 
 	if len(filter.Limit) > 0 {
-		query += " limit "+ filter.Limit
+		query += " limit " + filter.Limit
 	}
 
 	if len(filter.SortBy) > 0 {
-		if (filter.SortBy == "lowest") {
+		if filter.SortBy == "lowest" {
 			query += " order by ps.SellPrice ASC"
 		} else {
 			query += " order by ps.SellPrice DESC"
 		}
 	}
 
-	fmt.Println(query)
-
+	//fmt.Println(query)
 	db := DBconnection()
 	results, err := db.Query(query)
 
@@ -240,31 +239,31 @@ func getProductsFeed(filter ProductFilters) []Product  {
 	return products
 }
 
-func isInt(productId string) (bool) {
+func isInt(productId string) bool {
 	match, _ := regexp.MatchString("([0-9]+)", productId)
 	return match
 }
 
-func getProductMinMax(w http.ResponseWriter, r *http.Request)  {
+func getProductMinMax(w http.ResponseWriter, r *http.Request) {
 	db := DBconnection()
 
 	vars := mux.Vars(r)
 	productId := vars["productId"]
 
 	match := isInt(productId)
-	if  !match{
-		error := ErrorMessage {
+	if !match {
+		error := ErrorMessage{
 			"Product Id required"}
-		respondwithJSON(w,400, error)
+		respondwithJSON(w, 400, error)
 		return
 	}
 
 	priquery := "select primary_rpid from products_stock where psid = ? limit 1"
 	priresults, err := db.Query(priquery, productId)
 	if checkErr(err) {
-		error := ErrorMessage {
+		error := ErrorMessage{
 			"Error Finding Product"}
-		respondwithJSON(w,400, error)
+		respondwithJSON(w, 400, error)
 		return
 	}
 
@@ -279,9 +278,9 @@ func getProductMinMax(w http.ResponseWriter, r *http.Request)  {
 	}
 
 	if rpid_val == 0 {
-		error := ErrorMessage {
+		error := ErrorMessage{
 			"Error Finding Product"}
-		respondwithJSON(w,400, error)
+		respondwithJSON(w, 400, error)
 		return
 	}
 
@@ -297,17 +296,17 @@ func getProductMinMax(w http.ResponseWriter, r *http.Request)  {
 	var qtymaxn, qtyminn int
 	for minmaxResults.Next() {
 		var qtymax, qtymin int
-		err = minmaxResults.Scan(&qtymax,&qtymin)
+		err = minmaxResults.Scan(&qtymax, &qtymin)
 		checkErr(err)
 		qtymaxn = qtymax
 		qtyminn = qtymin
 	}
 
-	var minmax = MinMax {
+	var minmax = MinMax{
 		qtyminn,
 		qtymaxn}
 
-	respondwithJSON(w,200, minmax)
+	respondwithJSON(w, 200, minmax)
 }
 
 func getProducts(w http.ResponseWriter, r *http.Request) {
@@ -337,7 +336,7 @@ func getProducts(w http.ResponseWriter, r *http.Request) {
 		Filters:  filterdata,
 	}
 	//output, _ := json.MarshalIndent(products,"","  ")
-	respondwithJSON(w,200, data)
+	respondwithJSON(w, 200, data)
 }
 
 func getProductPage(w http.ResponseWriter, r *http.Request) {
@@ -362,7 +361,7 @@ func getProductPage(w http.ResponseWriter, r *http.Request) {
 		"p.Product_Type, " +
 		"SUM(((ps.MarginPC/100)*ps.SellPrice)+ps.SellPrice) as `Websale`, " +
 		"ps.psid," +
-		"ENCRYPT(ps.Weight) AS Wcrypt, "+
+		"ENCRYPT(ps.Weight) AS Wcrypt, " +
 		"ps.Weight AS Weight, " +
 		"ps.Metal, " +
 		"p.rpid " +
@@ -380,7 +379,7 @@ func getProductPage(w http.ResponseWriter, r *http.Request) {
 	for results.Next() {
 		var id, psid, rpid int
 		var websale float32
-		var title, category, ptype,wcrypt,weight, metal string
+		var title, category, ptype, wcrypt, weight, metal string
 
 		err = results.Scan(
 			&id,
@@ -443,17 +442,16 @@ func getProductPage(w http.ResponseWriter, r *http.Request) {
 	//strconv.FormatInt(int64(prod.Rpid), 10)
 	similarProductFilters := ProductFilters{
 		ProductId: productId,
-		Limit: limit,
-		Category: prod.Category,
-		Type: prod.Type}
+		Limit:     limit,
+		Category:  prod.Category,
+		Type:      prod.Type}
 
 	similarProducts := getProductsFeed(similarProductFilters)
 
-	var productpage = ProductPage {
+	var productpage = ProductPage{
 		prod,
 		qty,
 		similarProducts}
 
-	respondwithJSON(w,201, productpage)
+	respondwithJSON(w, 201, productpage)
 }
-

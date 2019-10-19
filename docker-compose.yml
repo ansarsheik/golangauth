@@ -1,9 +1,9 @@
 version: "3.1"
 
 services:
-  gowebserver:
+  product-service:
     build: .
-    container_name: gowebserver
+    container_name: product-service
     env_file:
      - ./.env
     ports:

@@ -7,7 +7,7 @@ FROM golang:1.11 as builder
 LABEL maintainer="AnsarSheik"
 
 # Set the Current Working Directory inside the container
-WORKDIR $GOPATH/src/microservices
+WORKDIR $GOPATH/src/Ct-product-mservices
 
 # Copy everything from the current directory to the PWD(Present Working Directory) inside the container
 COPY . .
@@ -21,12 +21,12 @@ RUN go install -v ./...
 
 #RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -ldflags '-extldflags "-static"' -o bullion-products-service .
 
-RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -ldflags "-X main.WEBSERVER_PORT="$WEBSERVER_PORT -o bullion-products-service .
+RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -ldflags "-X main.WEBSERVER_PORT="$WEBSERVER_PORT -o bullion-product-service .
 
 #
 FROM scratch
-COPY --from=builder /go/src/microservices/bullion-products-service /app/
-COPY --from=builder /go/src/microservices/.env /app/
+COPY --from=builder /go/src/Ct-product-mservices/bullion-product-service /app/
+COPY --from=builder /go/src/Ct-product-mservices/.env /app/
 WORKDIR /app
 EXPOSE $WEBSERVER_PORT
-CMD ["./bullion-products-service"]
+CMD ["./bullion-product-service"]
