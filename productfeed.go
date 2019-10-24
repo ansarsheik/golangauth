@@ -153,7 +153,9 @@ func getWeightFilter(wt string, filter ProductFilters) []WeightFilter {
 		"WHERE 1 " + prepareCondition(filter) +
 		" AND ps.WeightHuman = '" + wt +
 		"' HAVING weight > 0 " +
-		"ORDER BY ps.`weight` ASC"
+		"ORDER BY `weight` ASC"
+
+	fmt.Println(weightGms)
 
 	resultsGms, err := db.Query(weightGms)
 	checkErr(err)
@@ -212,12 +214,15 @@ func getProductsFeed(filter ProductFilters) []Product {
 	//fmt.Println(query)
 	db := DBconnection()
 	results, err := db.Query(query)
-
 	checkErr(err)
 
 	defer results.Close()
 
 	var products []Product
+
+	if !results.Next() {
+		return products
+	}
 
 	for results.Next() {
 		var p Product
@@ -323,6 +328,13 @@ func getProducts(w http.ResponseWriter, r *http.Request) {
 		ProductId: r.URL.Query().Get("productId")}
 
 	products := getProductsFeed(filters)
+	if len(products) < 1 {
+		error := ErrorMessage{
+			"Error Getting Product Feed"}
+		respondwithJSON(w, 400, error)
+		return
+	}
+
 	weightInGrams := getWeightFilter("gms", filters)
 	weightInOz := getWeightFilter("oz", filters)
 
@@ -374,6 +386,13 @@ func getProductPage(w http.ResponseWriter, r *http.Request) {
 	checkErr(err)
 
 	defer results.Close()
+
+	if !results.Next() {
+		error := ErrorMessage{
+			"Error Loading Product Page"}
+		respondwithJSON(w, 400, error)
+		return
+	}
 
 	prod := Product{}
 	for results.Next() {

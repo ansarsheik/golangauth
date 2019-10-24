@@ -3,9 +3,9 @@ package main
 import (
 	"context"
 	"encoding/json"
-	"io/ioutil"
-	"fmt"
 	"flag"
+	"fmt"
+	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
@@ -13,9 +13,9 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/gamegos/jsend"
 	"github.com/gorilla/mux"
 	"github.com/joho/godotenv"
-	"github.com/gamegos/jsend"
 )
 
 func waitForShutdown(srv *http.Server) {
@@ -45,7 +45,8 @@ func respondwithJSON(w http.ResponseWriter, code int, payload interface{}) {
 
 var myClient = &http.Client{Timeout: 10 * time.Second}
 
-func checkErr(err error) (bool) {
+func checkErr(err error) bool {
+	log.Println(err)
 	if err != nil {
 		return true
 	}
@@ -54,14 +55,14 @@ func checkErr(err error) (bool) {
 
 type BasketProduct struct {
 	Psid int `json:"psid"`
-	Qty int `json:"qty"`
+	Qty  int `json:"qty"`
 }
 
 type Basket struct {
 	BasketData []BasketProduct `json:"basketdata"`
 }
 
-func print(msg interface{})  {
+func print(msg interface{}) {
 	//fmt.Println(msg)
 }
 
@@ -95,7 +96,7 @@ func getPrimaryId(psid int) int {
 
 		err = psidresults.Scan(
 			&psid,
-			)
+		)
 
 		checkErr(err)
 
@@ -134,7 +135,7 @@ func getPrimaryPsid(psid int) int {
 
 func getSellableProduct(psid int, qty int) Product {
 
-	query :=  "SELECT " +
+	query := "SELECT " +
 		"p.pid," +
 		"p.Product_Title," +
 		"p.Product_Category, " +
@@ -144,7 +145,7 @@ func getSellableProduct(psid int, qty int) Product {
 		"p.pid as Quantity , " +
 		"p.pid as PrimaryPsid , " +
 		"ps.psid," +
-		"ENCRYPT(ps.Weight) AS Wcrypt, "+
+		"ENCRYPT(ps.Weight) AS Wcrypt, " +
 		"ps.Weight AS Weight, " +
 		"ps.Metal, " +
 		"p.rpid " +
@@ -167,7 +168,7 @@ func getSellableProduct(psid int, qty int) Product {
 	for prodResults.Next() {
 		var id, psid, rpid, primarypsid, quantity int
 		var websale, subtotal float32
-		var title, category, ptype, wcrypt,weight, metal string
+		var title, category, ptype, wcrypt, weight, metal string
 
 		err = prodResults.Scan(
 			&id,
@@ -218,7 +219,7 @@ func getBasketData(w http.ResponseWriter, r *http.Request) {
 	}
 
 	//fmt.Println("line 185 ", basketProductResult)
-	respondwithJSON(w,200, basketProductResult)
+	respondwithJSON(w, 200, basketProductResult)
 }
 
 func test(w http.ResponseWriter, r *http.Request) {
